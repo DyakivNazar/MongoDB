@@ -1,0 +1,205 @@
+db.students.insertMany(
+	[
+	        {"name": "Mariya Ivanivna", "class_curator": 7, "lesson": "english", "payment": 2000},
+]
+)
+            додати табличку з даними
+
+db.users.find({
+    $and:[
+        {rating:2},
+        {gender:'female'} 
+    ]
+})
+
+db.users.find({
+    $or:[
+        {rating:2},
+        {gender:'female'}
+    ]
+})
+
+db.users.find({
+    age:{
+        $in:[12, 25,33,48,16,18] в такому то діапазоні
+    }
+})
+db.users.find({
+    age:{
+        $nin:[12, 25,33,48,16,18]  не в такому то діапазоні
+    }
+})
+
+db.users.find({
+    rating:{$gt:2} >
+})
+db.users.find({
+    rating:{$gte:2} >=
+})
+
+db.users.find({
+    rating:{$lt:2} <
+})
+db.users.find({
+    rating:{$lte:2} <=
+})
+
+db.users.find({
+    rating:{$ne:3} =!
+})
+
+db.users.find({
+    rating:{$eq:3} =
+})
+
+db.users.find({name:/^a/i}) шукати по першій букві
+db.users.find({name:/a$/i}) шукати по останній букві
+db.users.find({name:/.{2}t/i}) шукати по 3 букві
+db.users.find({name:/^k.*a$/i}) шукати коли початок на к закінчуються на а
+db.users.find({name:/v/i}) шукати коли десь є v
+
+db.users.find().sort({rating:1}) сортування 1 (від меншого до найбільшого)
+db.users.find().sort({rating:-1})сортування -1 (від найбільшого до меншого) 
+db.users.find().sort({rating:-1, name:-1}).limit(2).skip(4)
+
+
+db.users.updateOne(
+    {_id:ObjectId('66e8610553f9506ecef59b3d')},
+    {$set:{rating2:8}} заміна або додавання
+)
+
+db.users.updateOne(
+    {_id:ObjectId('66e8610553f9506ecef59b3d')},
+    {$unset:{rating.1 :1}} видалити поле .1 елемент з масиву
+)
+
+db.users.updateMany(
+    {gender:'male'},
+    {$set:{gender:'animal'}} заміна
+)
+
+db.users.find({"address.house":{$gt:20}}) address.house у випадку якщо є {}
+
+db.users.find({parents:{$size:1}}) робото з масивами з елементами
+db.users.find({parents:{$exists:0}}) робото з масивами навіть якщо немає даних
+db.users.find({studying.1:'java'} пошук по індексу
+{studying:null} немає поля
+
+db.users.find({_id:ObjectId('66e8610553f9506ecef59b44')}) пошук по id
+
+db.users.updateOne(
+    {_id:ObjectId('66e8610553f9506ecef59b44')},
+    {$push:{parents:'Kamila'}} додати
+    {$pull:{parents:'Kamila'}} видалити
+
+)
+
+
+db.users.deleteOne(
+    {_id:ObjectId('66e8620953f9506ecef59b47')} 
+)
+
+db.users.drop() видалити повністю табличку
+
+
+db.teacher.aggregate([   агрегація
+    {
+        $group:{ групуємо
+            _id:'$lesson', назва поля обов'язково $
+            minPayment:{$min:'$payment'},  
+            maxPayment:{$max:'$payment'},
+            avgPayment:{$avg:'$payment'},
+            sumPayment:{$sum:'$payment'},  
+            countOfTeachers:{$sum:1}       кількість
+        }
+    },
+    {
+        $match:{  пошук
+            sumPayment:{$gt:3000}
+        }
+    },
+    {
+        $sort:{maxPayment:-1}   сортування 
+    },
+    {
+        $project:{ остаточне рішення агрегація
+            myLesson:'$_id',
+            minPayment:1,
+            maxPayment:1, включити
+            avgPayment:1,
+            sumPayment:1,
+            countOfTeachers:1,
+            _id:0 виключити
+        }
+    },
+    {
+        $addFields:{
+            lesson:{'$_id'} додаткові поля
+        }
+    },
+    
+    {
+        $skip:2
+    },
+    {
+        $limit:2
+    },
+])
+
+
+db.teacher.aggregate([
+    {
+        $lookup:{ табличка з якою з'єднюємо
+            from:'students',
+            localField:'class_curator', поле по якому обєднюємо
+            foreignField:'class',	поле до якого обєднюємо
+            as:'myStudents'		називаємо масив
+        }
+    },
+    {
+        $unwind:'$myStudents' розкласти на складові
+    },
+    {
+        $unwind:'$myStudents.parents'
+    },
+    {
+        $match:{ пошук
+            'myStudents.parents.profession':'doctor'
+        }
+    },
+    {
+        $count:'doctorCount' кількість
+    }
+])
+
+db.students.find({lessons:{$all:['english', 'geology']}}) шукати всіх хто має такі то дані 
+
+db.students.findOne({'lessons.1':'mathematics'}).name шукати один з таким то іменем
+
+db.students.find({}, {lessons:{$slice:2}}) обрізаємо масив
+
+db.students.find({lessons:{$size:2}})  шукає тільки з 
+
+
+db.students.updateOne(
+    {_id:ObjectId('66eb00b9fce4ca69f197ae98')},
+    {$pop:{'lessons':1}}  видалення останнього еллемената -1 перший
+)
+
+db.students.updateOne(
+    {_id:ObjectId('66eb00b9fce4ca69f197ae98')},
+    {$addToSet:{lessons:'css'}} додавання елементів за унікальністю
+
+{$addToSet:{lessons:{$each:['java', 'python', 'mongo', 'html']}}} дозволяє передати кілька значень одразу.
+
+
+{$set:{'parents.$[].profession':'doctor'}},зверення до кожного елемента масиву та замінюємо
+
+{$set:{'parents.$[item].profession':'doctor'}},  item кожен алемент має зміну(без нього )
+{'arrayFilters':[{'item.profession':null}]} список фільрів по item
+
+$addFlields:{
+	lessonsCount:{$size: '$lessons'} додавання нового поля
+}
+)
+ 
